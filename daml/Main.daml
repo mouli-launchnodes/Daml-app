@@ -1,0 +1,60 @@
+module Main where
+
+template Asset
+  with
+    owner: Party
+    description: Text
+    createdAt: Time
+    observers: [Party]
+  where
+    signatory owner
+    observer observers
+
+    -- Ensure description is not empty
+    ensure description /= ""
+
+    choice ProposeTransfer: ContractId TransferProposal
+      with
+        newOwner: Party
+      controller owner
+      do
+        -- Validate receiver is different from owner
+        assertMsg "Cannot transfer to yourself" (newOwner /= owner)
+        
+        proposalTime <- getTime
+        create TransferProposal with
+          asset = this
+          sender = owner
+          receiver = newOwner
+          proposedAt = proposalTime
+
+template TransferProposal
+  with
+    asset: Asset
+    sender: Party
+    receiver: Party
+    proposedAt: Time
+  where
+    signatory sender
+    observer receiver
+
+    choice Accept: ContractId Asset
+      controller receiver
+      do
+        create asset with
+          owner = receiver
+          observers = []  -- Clear observers on transfer
+
+    choice Reject: ContractId Asset
+      controller receiver
+      do
+        create asset with
+          owner = sender
+          observers = []
+
+    choice Cancel: ContractId Asset
+      controller sender
+      do
+        create asset with
+          owner = sender
+          observers = []

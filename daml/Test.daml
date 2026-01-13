@@ -1,0 +1,148 @@
+module Test where
+
+import Main
+import Daml.Script
+import DA.Time
+
+-- Test 1: Successful Transfer
+testSuccessfulTransfer: Script ()
+testSuccessfulTransfer = script do
+  -- Setup parties
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  
+  -- Alice creates asset
+  now <- getTime
+  assetCid <- submit alice do
+    createCmd Asset with
+      owner = alice
+      description = "Gold Watch"
+      createdAt = now
+      observers = []
+  
+  -- Alice proposes transfer to Bob
+  proposalCid <- submit alice do
+    exerciseCmd assetCid ProposeTransfer with
+      newOwner = bob
+  
+  -- Bob accepts
+  newAssetCid <- submit bob do
+    exerciseCmd proposalCid Accept
+  
+  -- Verify Bob owns it
+  Some newAsset <- queryContractId bob newAssetCid
+  assert (newAsset.owner == bob)
+  assert (newAsset.description == "Gold Watch")
+  
+  return ()
+
+-- Test 2: Rejected Transfer
+testRejectedTransfer: Script ()
+testRejectedTransfer = script do
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  
+  now <- getTime
+  assetCid <- submit alice do
+    createCmd Asset with
+      owner = alice
+      description = "Silver Coin"
+      createdAt = now
+      observers = []
+  
+  -- Alice proposes
+  proposalCid <- submit alice do
+    exerciseCmd assetCid ProposeTransfer with newOwner = bob
+  
+  -- Bob rejects
+  returnedAssetCid <- submit bob do
+    exerciseCmd proposalCid Reject
+  
+  -- Verify Alice still owns it
+  Some returnedAsset <- queryContractId alice returnedAssetCid
+  assert (returnedAsset.owner == alice)
+  
+  return ()
+
+-- Test 3: Cancel Proposal
+testCancelProposal: Script ()
+testCancelProposal = script do
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  
+  now <- getTime
+  assetCid <- submit alice do
+    createCmd Asset with
+      owner = alice
+      description = "Bronze Medal"
+      createdAt = now
+      observers = []
+  
+  -- Alice proposes
+  proposalCid <- submit alice do
+    exerciseCmd assetCid ProposeTransfer with newOwner = bob
+  
+  -- Alice cancels before Bob responds
+  cancelledAssetCid <- submit alice do
+    exerciseCmd proposalCid Cancel
+  
+  -- Verify Alice owns it again
+  Some cancelledAsset <- queryContractId alice cancelledAssetCid
+  assert (cancelledAsset.owner == alice)
+  
+  return ()
+
+-- Test 4: Cannot transfer to self
+testCannotTransferToSelf: Script ()
+testCannotTransferToSelf = script do
+  alice <- allocateParty "Alice"
+  
+  now <- getTime
+  assetCid <- submit alice do
+    createCmd Asset with
+      owner = alice
+      description = "Self Transfer Test"
+      createdAt = now
+      observers = []
+  
+  -- This should fail
+  submitMustFail alice do
+    exerciseCmd assetCid ProposeTransfer with newOwner = alice
+  
+  return ()
+
+-- Test 5: Multi-party chain
+testTransferChain: Script ()
+testTransferChain = script do
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  charlie <- allocateParty "Charlie"
+  
+  -- Alice -> Bob -> Charlie
+  now <- getTime
+  assetCid <- submit alice do
+    createCmd Asset with
+      owner = alice
+      description = "Hot Potato"
+      createdAt = now
+      observers = []
+  
+  -- Alice -> Bob
+  proposal1 <- submit alice do
+    exerciseCmd assetCid ProposeTransfer with newOwner = bob
+  
+  bobAssetCid <- submit bob do
+    exerciseCmd proposal1 Accept
+  
+  -- Bob -> Charlie
+  proposal2 <- submit bob do
+    exerciseCmd bobAssetCid ProposeTransfer with newOwner = charlie
+  
+  charlieAssetCid <- submit charlie do
+    exerciseCmd proposal2 Accept
+  
+  -- Verify Charlie owns it
+  Some finalAsset <- queryContractId charlie charlieAssetCid
+  assert (finalAsset.owner == charlie)
+  
+  return ()

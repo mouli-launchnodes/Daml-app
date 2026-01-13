@@ -1,0 +1,18 @@
+module Setup where
+
+import Daml.Script
+
+-- Setup script to create parties and initial data
+setup : Script ()
+setup = script do
+  -- Allocate parties
+  alice <- allocatePartyWithHint "Alice" (PartyIdHint "Alice")
+  bob <- allocatePartyWithHint "Bob" (PartyIdHint "Bob")
+  charlie <- allocatePartyWithHint "Charlie" (PartyIdHint "Charlie")
+  
+  -- Display party IDs for reference
+  debug ("Alice party ID: " <> show alice)
+  debug ("Bob party ID: " <> show bob)
+  debug ("Charlie party ID: " <> show charlie)
+  
+  return ()
