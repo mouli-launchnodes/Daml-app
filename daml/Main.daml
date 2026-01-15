@@ -41,6 +41,15 @@ template TransferProposal
     choice Accept: ContractId Asset
       controller receiver
       do
+        acceptTime <- getTime
+        create TransferHistory with
+          assetDescription = asset.description
+          assetCreatedAt = asset.createdAt
+          fromParty = sender
+          toParty = receiver
+          transferredAt = acceptTime
+          observers = [sender, receiver]
+        
         create asset with
           owner = receiver
           observers = []  -- Clear observers on transfer
@@ -58,3 +67,15 @@ template TransferProposal
         create asset with
           owner = sender
           observers = []
+
+template TransferHistory
+  with
+    assetDescription: Text
+    assetCreatedAt: Time
+    fromParty: Party
+    toParty: Party
+    transferredAt: Time
+    observers: [Party]
+  where
+    signatory fromParty, toParty
+    observer observers

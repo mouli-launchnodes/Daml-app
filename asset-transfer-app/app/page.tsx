@@ -7,6 +7,7 @@ import { LayoutHeader } from "@/components/layout-header"
 import { AssetList } from "@/components/asset-list"
 import { CreateAssetForm } from "@/components/create-asset-form"
 import { ProposalList } from "@/components/proposal-list"
+import { TransferHistory } from "@/components/transfer-history"
 import { Toaster } from "@/components/ui/toaster"
 
 export default function HomePage() {
@@ -37,6 +38,7 @@ export default function HomePage() {
           <div className="lg:col-span-2 space-y-6">
             <AssetList />
             <CreateAssetForm />
+            <TransferHistory />
           </div>
           <div>
             <ProposalList />

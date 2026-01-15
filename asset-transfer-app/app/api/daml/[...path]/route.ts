@@ -3,25 +3,29 @@ import { NextRequest, NextResponse } from 'next/server'
 const DAML_JSON_API_URL = 'http://127.0.0.1:7575'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     path: string[]
-  }
+  }>
 }
 
 export async function GET(request: NextRequest, context: RouteParams) {
-  return proxyRequest(request, context.params.path, 'GET')
+  const params = await context.params
+  return proxyRequest(request, params.path, 'GET')
 }
 
 export async function POST(request: NextRequest, context: RouteParams) {
-  return proxyRequest(request, context.params.path, 'POST')
+  const params = await context.params
+  return proxyRequest(request, params.path, 'POST')
 }
 
 export async function PUT(request: NextRequest, context: RouteParams) {
-  return proxyRequest(request, context.params.path, 'PUT')
+  const params = await context.params
+  return proxyRequest(request, params.path, 'PUT')
 }
 
 export async function DELETE(request: NextRequest, context: RouteParams) {
-  return proxyRequest(request, context.params.path, 'DELETE')
+  const params = await context.params
+  return proxyRequest(request, params.path, 'DELETE')
 }
 
 async function proxyRequest(request: NextRequest, pathSegments: string[] | undefined, method: string) {

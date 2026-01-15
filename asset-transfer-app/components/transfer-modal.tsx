@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useDaml, type Asset, AVAILABLE_PARTIES } from "@/context/daml-context"
+import { useDaml, type AssetContract, AVAILABLE_PARTIES } from "@/context/daml-context"
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import { ArrowRight, Loader2, Send } from "lucide-react"
 
 interface TransferModalProps {
-  asset: Asset | null
+  asset: AssetContract | null
   isOpen: boolean
   onClose: () => void
 }
@@ -89,7 +89,7 @@ export function TransferModal({ asset, isOpen, onClose }: TransferModalProps) {
           <div className="space-y-4 py-4">
             <div className="rounded-lg border border-border bg-muted/50 p-4">
               <p className="text-sm text-muted-foreground">Asset</p>
-              <p className="font-medium">{asset.description}</p>
+              <p className="font-medium">{asset.payload.description}</p>
             </div>
 
             <div className="space-y-2">
@@ -117,23 +117,25 @@ export function TransferModal({ asset, isOpen, onClose }: TransferModalProps) {
           <div className="space-y-4 py-4">
             <div className="rounded-lg border border-border bg-muted/50 p-4">
               <p className="text-sm text-muted-foreground">Asset</p>
-              <p className="font-medium">{asset.description}</p>
+              <p className="font-medium">{asset.payload.description}</p>
             </div>
 
             <div className="flex items-center justify-center gap-4 py-2">
-              <div className="text-center">
+              <div className="text-center flex-shrink-0">
                 <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
                   {party?.displayName[0]}
                 </div>
                 <p className="mt-1 text-sm font-medium">{party?.displayName}</p>
                 <p className="text-xs text-muted-foreground">Sender</p>
               </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground" />
-              <div className="text-center">
+              <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <div className="text-center flex-shrink-0">
                 <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-medium text-secondary-foreground">
-                  {recipient[0]}
+                  {AVAILABLE_PARTIES.find(p => p.id === recipient)?.displayName[0] || recipient[0]}
                 </div>
-                <p className="mt-1 text-sm font-medium">{recipient}</p>
+                <p className="mt-1 text-sm font-medium truncate max-w-[120px] mx-auto">
+                  {AVAILABLE_PARTIES.find(p => p.id === recipient)?.displayName || recipient.split("::")[0]}
+                </p>
                 <p className="text-xs text-muted-foreground">Recipient</p>
               </div>
             </div>

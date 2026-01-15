@@ -1,6 +1,6 @@
 "use client"
 
-import { useDaml } from "@/context/daml-context"
+import { useDaml, AVAILABLE_PARTIES } from "@/context/daml-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -107,48 +107,52 @@ export function ProposalList() {
           </div>
         ) : (
           <div className="space-y-3">
-            {proposals.map((proposal) => (
-              <div
-                key={proposal.contractId}
-                className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/30"
-              >
-                <div className="mb-3">
-                  <span className="font-medium">{proposal.payload.asset.description}</span>
-                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Badge variant="outline">{proposal.payload.sender}</Badge>
-                    <ArrowRight className="h-4 w-4" />
-                    <Badge variant="secondary">You</Badge>
+            {proposals.map((proposal) => {
+              const senderDisplayName = AVAILABLE_PARTIES.find(p => p.id === proposal.payload.sender)?.displayName || proposal.payload.sender.split("::")[0]
+              
+              return (
+                <div
+                  key={proposal.contractId}
+                  className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/30"
+                >
+                  <div className="mb-3">
+                    <span className="font-medium">{proposal.payload.asset.description}</span>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                      <Badge variant="outline" className="truncate max-w-[120px]">{senderDisplayName}</Badge>
+                      <ArrowRight className="h-4 w-4 flex-shrink-0" />
+                      <Badge variant="secondary">You</Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleAccept(proposal.contractId)}
+                      disabled={processingId === proposal.contractId}
+                    >
+                      {processingId === proposal.contractId ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="mr-2 h-4 w-4" />
+                      )}
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleReject(proposal.contractId)}
+                      disabled={processingId === proposal.contractId}
+                    >
+                      {processingId === proposal.contractId ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <X className="mr-2 h-4 w-4" />
+                      )}
+                      Reject
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleAccept(proposal.contractId)}
-                    disabled={processingId === proposal.contractId}
-                  >
-                    {processingId === proposal.contractId ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="mr-2 h-4 w-4" />
-                    )}
-                    Accept
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleReject(proposal.contractId)}
-                    disabled={processingId === proposal.contractId}
-                  >
-                    {processingId === proposal.contractId ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <X className="mr-2 h-4 w-4" />
-                    )}
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </CardContent>

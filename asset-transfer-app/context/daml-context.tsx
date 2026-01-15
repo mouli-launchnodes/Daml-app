@@ -34,12 +34,25 @@ export interface TransferProposalContract {
   }
 }
 
+export interface TransferHistoryContract {
+  contractId: string
+  payload: {
+    assetDescription: string
+    assetCreatedAt: string
+    fromParty: string
+    toParty: string
+    transferredAt: string
+    observers: string[]
+  }
+}
+
 interface DamlContextType {
   party: PartyInfo | null
   setParty: (party: PartyInfo | null) => void
   isConnected: boolean
   assets: AssetContract[]
   proposals: TransferProposalContract[]
+  transferHistory: TransferHistoryContract[]
   createAsset: (description: string) => Promise<void>
   proposeTransfer: (contractId: string, newOwner: string) => Promise<void>
   acceptProposal: (contractId: string) => Promise<void>
@@ -57,14 +70,15 @@ const LEDGER_ID = process.env.NEXT_PUBLIC_LEDGER_ID || "sandbox"
 const JSON_API_URL = "/api/daml" // Use Next.js API proxy instead of direct DAML API
 
 // Template IDs for DAML contracts (with package ID)
-const ASSET_TEMPLATE_ID = "3871bbf7cc5081b11362b3f94db3563d34f3e61465fc4032798a77c406a862b2:Main:Asset"
-const TRANSFER_PROPOSAL_TEMPLATE_ID = "3871bbf7cc5081b11362b3f94db3563d34f3e61465fc4032798a77c406a862b2:Main:TransferProposal"
+const ASSET_TEMPLATE_ID = "f479c0d6bf66703aabad391db08b3dc7085d964fb7e837f7d1291ed0cc186fcf:Main:Asset"
+const TRANSFER_PROPOSAL_TEMPLATE_ID = "f479c0d6bf66703aabad391db08b3dc7085d964fb7e837f7d1291ed0cc186fcf:Main:TransferProposal"
+const TRANSFER_HISTORY_TEMPLATE_ID = "f479c0d6bf66703aabad391db08b3dc7085d964fb7e837f7d1291ed0cc186fcf:Main:TransferHistory"
 
 // Available parties for development (with proper Canton party IDs)
 export const AVAILABLE_PARTIES: PartyInfo[] = [
-  { id: "Alice::1220a82f9051f4828b80d8cf6620fba66562303f110452605ba6bb45381683dc7d49", displayName: "Alice" },
-  { id: "Bob::1220a82f9051f4828b80d8cf6620fba66562303f110452605ba6bb45381683dc7d49", displayName: "Bob" },
-  { id: "Charlie::1220a82f9051f4828b80d8cf6620fba66562303f110452605ba6bb45381683dc7d49", displayName: "Charlie" },
+  { id: "Alice::1220da6aa357c9f5d76e6674335c585bd2fff7954323cd318e96ffbba26d2f65ce53", displayName: "Alice" },
+  { id: "Bob::1220da6aa357c9f5d76e6674335c585bd2fff7954323cd318e96ffbba26d2f65ce53", displayName: "Bob" },
+  { id: "Charlie::1220da6aa357c9f5d76e6674335c585bd2fff7954323cd318e96ffbba26d2f65ce53", displayName: "Charlie" },
 ]
 
 // Generate JWT token for party authentication (development only)
@@ -109,6 +123,7 @@ export function DamlProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false)
   const [assets, setAssets] = useState<AssetContract[]>([])
   const [proposals, setProposals] = useState<TransferProposalContract[]>([])
+  const [transferHistory, setTransferHistory] = useState<TransferHistoryContract[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -120,6 +135,7 @@ export function DamlProvider({ children }: { children: React.ReactNode }) {
       setIsConnected(false)
       setAssets([])
       setProposals([])
+      setTransferHistory([])
       return
     }
 
@@ -180,6 +196,19 @@ export function DamlProvider({ children }: { children: React.ReactNode }) {
         proposal.payload.asset && proposal.payload.asset.description
       )
       setProposals(validProposals)
+
+      // Load transfer history where current party is involved (as sender or receiver)
+      const historyResponse = await damlRequest('/v1/query', 'POST', token, {
+        templateIds: [TRANSFER_HISTORY_TEMPLATE_ID]
+      })
+      
+      // Filter history to only show transfers involving current party
+      const validHistory = (historyResponse.result || []).filter((history: any) => 
+        history && history.contractId && history.payload && 
+        history.payload.assetDescription &&
+        (history.payload.fromParty === party.id || history.payload.toParty === party.id)
+      )
+      setTransferHistory(validHistory)
 
     } catch (err) {
       console.error('Failed to load data:', err)
@@ -371,6 +400,7 @@ export function DamlProvider({ children }: { children: React.ReactNode }) {
         isConnected,
         assets,
         proposals,
+        transferHistory,
         createAsset,
         proposeTransfer,
         acceptProposal,

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useDaml, type Asset } from "@/context/daml-context"
+import { useDaml, type AssetContract } from "@/context/daml-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -11,10 +11,10 @@ import { Package, ArrowRightLeft, Inbox } from "lucide-react"
 
 export function AssetList() {
   const { assets, isLoading } = useDaml()
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+  const [selectedAsset, setSelectedAsset] = useState<AssetContract | null>(null)
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
 
-  const handleTransferClick = (asset: Asset) => {
+  const handleTransferClick = (asset: AssetContract) => {
     setSelectedAsset(asset)
     setIsTransferModalOpen(true)
   }
@@ -82,7 +82,7 @@ export function AssetList() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{asset.description}</span>
+                      <span className="font-medium truncate">{asset.payload.description}</span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground font-mono truncate">
                       ID: {asset.contractId.slice(0, 20)}...

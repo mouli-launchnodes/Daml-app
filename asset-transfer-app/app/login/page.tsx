@@ -46,16 +46,18 @@ export default function LoginPage() {
                 className="w-full justify-between h-auto py-4 bg-transparent"
                 onClick={() => handleSelectParty(p)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">
                     {p.displayName[0]}
                   </div>
-                  <div className="text-left">
+                  <div className="text-left min-w-0 flex-1">
                     <p className="font-medium">{p.displayName}</p>
-                    <p className="text-xs text-muted-foreground">Party ID: {p.id}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Party ID: {p.id.split("::")[0]}::{p.id.split("::")[1].slice(0, 12)}...
+                    </p>
                   </div>
                 </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground ml-2" />
               </Button>
             ))}
           </CardContent>
